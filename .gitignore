@@ -1,0 +1,6 @@
+models/**
+textures/**
+build/**
+.vs/**
+.vscode/**
+out/**
