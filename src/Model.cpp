@@ -2,6 +2,9 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define TINYGLTF_IMPLEMENTATION
@@ -60,6 +63,18 @@ void Model::load(std::string& file)
 	}
 	glBindVertexArray(0);
 
+	if (_model.nodes[0].rotation.size() == 4) {
+		glm::quat rot = glm::quat(_model.nodes[0].rotation[3],
+								  _model.nodes[0].rotation[0],
+								  _model.nodes[0].rotation[1],
+								  _model.nodes[0].rotation[2]);
+		_matrix = glm::mat4_cast(rot);
+	}
+	else
+	{
+		_matrix = glm::mat4(1.0f);
+	}
+
 	//cleanup 
 	for (auto it = _vbos.cbegin(); it != _vbos.cend();)
 	{
@@ -78,13 +93,17 @@ void Model::load(std::string& file)
 
 void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::vec3& camPosition)
 {
+	// Model Matrix
+	glm::mat4 m = model * _matrix;
 	_shader.use();
-	_shader.setMat4("model", model);
+	_shader.setMat4("model", m);
 	_shader.setMat4("view", view);
 	_shader.setMat4("projection", projection);
-	_shader.setVec3("sun_position", glm::vec3(3.0f, 10.0f, -5.0f));
+	_shader.setMat4("normal_matrix", glm::transpose(glm::inverse(view * projection)));
+	_shader.setVec3("sun_position", glm::vec3(10.0f, 15.0f, 15.0f));
 	_shader.setVec3("sun_color", glm::vec3(1.0f));
 	_shader.setVec3("view_position", camPosition);
+	_shader.setBool("has_tangent", _hasTangent);
 
 	glBindVertexArray(_vao);
 
@@ -184,7 +203,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 		_vbos[i] = vbo;
 		glBindBuffer(bufferView.target, vbo);
 
-		fprintf(stderr, "Loading Mesh with buffer size: %d\n\tbyte offset: %d\n", buffer.data.size(), bufferView.byteOffset);
+		fprintf(stderr, "Loading Mesh with buffer %s\n\tsize: %d\n\tbyte offset: %d\n", bufferView.name.c_str(), bufferView.byteLength, bufferView.byteOffset);
 
 		glBufferData(bufferView.target, bufferView.byteLength, &buffer.data.at(0) + bufferView.byteOffset, GL_STATIC_DRAW);
 	}
@@ -211,6 +230,8 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 			if (attrib.first.compare("TANGENT") == 0) vaa = 3;
 			if (vaa > -1)
 			{
+				fprintf(stderr, "Setting up %d\n", vaa);
+				if (vaa == 3) _hasTangent = true;
 				glEnableVertexAttribArray(vaa);
 				glVertexAttribPointer(vaa, size, accessor.componentType,
 					accessor.normalized ? GL_TRUE : GL_FALSE, byteStride,

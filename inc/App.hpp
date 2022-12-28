@@ -2,6 +2,7 @@
 #define APP 
 
 #include "util.hpp"
+#include "World.hpp"
 #include "Shader.hpp"
 #include "Camera.hpp"
 #include "Renderer.hpp"
@@ -19,11 +20,7 @@ public:
 
     void start();
 
-    //Static members for access from callbacks from glfw
-    uint32_t _width;
-    uint32_t _height;
-
-    Camera *camera;
+    // Variables for input
     float lastX = 0;
     float lastY = 0;
     bool firstMouse = true;
@@ -40,7 +37,6 @@ private:
     GLFWwindow* _window;
     Renderer* renderer;
 
-    //Model model
     Shader* model_shader;
 
 

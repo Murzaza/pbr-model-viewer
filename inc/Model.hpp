@@ -19,11 +19,11 @@ public:
 private:
 	Shader _shader;
 	unsigned int _vao;
-	unsigned int _texId;
 	std::map<size_t, unsigned int> _vbos;
-	//std::map<size_t, unsigned int> _texs;
 	std::vector<unsigned int> _texs;
 	tinygltf::Model _model;
+	glm::mat4 _matrix;
+	bool _hasTangent = false;
 
 	void setupNode(tinygltf::Node& node);
 	void setupMesh(tinygltf::Mesh& mesh);

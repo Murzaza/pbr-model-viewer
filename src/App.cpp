@@ -4,8 +4,15 @@
 #include <cstdio>
 #include <cstdlib>
 
-App::App(uint32_t width, uint32_t height, std::string title) :
-    _width(width), _height(height)
+/* World State Init */
+uint32_t scrnWidth;
+uint32_t scrnHeight;
+Camera* camera;
+Skybox* skybox;
+Model* model;
+/* World State Init end */
+
+App::App(uint32_t width, uint32_t height, std::string title)
 {
 
     // Setup GLFW
@@ -15,7 +22,9 @@ App::App(uint32_t width, uint32_t height, std::string title) :
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     
-    _window = glfwCreateWindow(_width, _height, title.c_str(), nullptr, nullptr);
+    scrnWidth = width;
+    scrnHeight = height;
+    _window = glfwCreateWindow(scrnWidth, scrnHeight, title.c_str(), nullptr, nullptr);
 
     if ( _window == nullptr )
     {
@@ -43,16 +52,45 @@ App::App(uint32_t width, uint32_t height, std::string title) :
     fprintf(stderr, "OpenGL version %s\nMax Vertex Attributes Supported: %d\n", glGetString(GL_VERSION), numAttribs);
     
     //Setup viewport
-    glViewport(0, 0, _width, _height);
+    glViewport(0, 0, scrnWidth, scrnHeight);
 
     glfwSetFramebufferSizeCallback(_window, handle_resize);
 
     camera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    skybox = new Skybox();
+    model = new Model();
     renderer = new Renderer();
+
+	std::vector<std::string> cubemap
+	{
+		"skybox/right.jpg",
+		"skybox/left.jpg",
+		"skybox/top.jpg",
+		"skybox/bottom.jpg",
+		"skybox/front.jpg",
+		"skybox/back.jpg"
+	};
+	skybox->load(cubemap);
+
+	Shader* skyboxShader = new Shader();
+	std::string vert = "skybox.vert";
+	std::string frag = "skybox.frag";
+	skyboxShader->add(GL_VERTEX_SHADER, vert);
+	skyboxShader->add(GL_FRAGMENT_SHADER, frag);
+	skyboxShader->link();
+	skybox->setShader(skyboxShader);
+
+    std::string modelFile = "Helmet/DamagedHelmet.gltf";
+    model->load(modelFile);
+
 }
 
 App::~App()
 {
+    delete camera;
+    delete skybox;
+    delete model;
+    delete renderer;
     glfwTerminate();
 }
 
@@ -66,9 +104,7 @@ void App::start()
 
         process_input(_window);
         glEnable(GL_DEPTH_TEST);
-        glm::mat4 view = camera->getViewMatrix();
-        glm::mat4 proj = glm::perspective(glm::radians(camera->_zoom), (float)_width / _height, 0.1f, 10000.f);
-        renderer->render(view, proj, camera->_position);
+        renderer->render();
 
         glfwSwapBuffers(_window);
         glfwPollEvents();
@@ -78,9 +114,9 @@ void App::start()
 void App::resize_window(GLFWwindow* window, int width, int height)
 {
     fprintf(stderr, "Processing resize\n");
-    _width = width;
-    _height = height;
-    glViewport(0, 0, _width, _height);
+    scrnWidth = width;
+    scrnHeight = height;
+    glViewport(0, 0, scrnWidth, scrnHeight);
 }
 
 void App::process_input(GLFWwindow* window)
