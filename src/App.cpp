@@ -1,6 +1,11 @@
 #include "App.hpp"
 #include "Shader.hpp"
 
+#include <imgui.h>
+#include <imgui_stdlib.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 #include <cstdio>
 #include <cstdlib>
 
@@ -56,6 +61,22 @@ App::App(uint32_t width, uint32_t height, std::string title)
 
     glfwSetFramebufferSizeCallback(_window, handle_resize);
 
+    //Setup IMGUI
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    if (!ImGui_ImplGlfw_InitForOpenGL(_window, true))
+    {
+        fprintf(stderr, "Unable to init IMGUI for GLFW\n");
+        assert(false);
+    }
+    if (!ImGui_ImplOpenGL3_Init())
+    {
+        fprintf(stderr, "Unable to init IMGUI for OpenGL\n");
+        assert(false);
+    }
+
+
     camera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
     skybox = new Skybox();
     model = new Model();
@@ -106,9 +127,27 @@ void App::start()
         glEnable(GL_DEPTH_TEST);
         renderer->render();
 
+        renderGUI();
         glfwSwapBuffers(_window);
         glfwPollEvents();
     }
+}
+
+void App::renderGUI()
+{
+    ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
+
+    ImGui::NewFrame();
+    {
+        ImGui::Begin("GUI");
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+            1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void App::resize_window(GLFWwindow* window, int width, int height)

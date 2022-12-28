@@ -19,6 +19,7 @@ public:
     ~App();
 
     void start();
+    void renderGUI();
 
     // Variables for input
     float lastX = 0;
