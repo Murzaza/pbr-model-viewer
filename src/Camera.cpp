@@ -1,14 +1,12 @@
 #include "Camera.hpp"
 
-Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) :
+Camera::Camera(glm::vec3 position, glm::vec3 up) :
     _front(glm::vec3(0.0f, 0.0f, -1.0f)),
     _speed(SPEED),
     _sensitivity(SENSITIVITY),
     _zoom(ZOOM),
     _position(position),
-    _worldUp(up),
-    _yaw(yaw),
-    _pitch(pitch)
+    _worldUp(up)
 {
     updateCameraAttributes();
 }
@@ -33,25 +31,7 @@ void Camera::processKeyPress(CameraDirection direction, float deltaTime)
         _position += _up * v;
     if (direction == DOWN)
         _position -= _up * v;
-}
 
-void Camera::processMouse(float xoffset, float yoffset, GLboolean constrainPitch)
-{
-    xoffset *= _sensitivity;
-    yoffset *= _sensitivity;
-
-    _yaw += xoffset;
-    _pitch += yoffset;
-
-    if ( constrainPitch )
-    {
-        if ( _pitch > 89.0f )
-            _pitch = 89.0f;
-        if ( _pitch < -89.0f )
-            _pitch = -89.0f;
-    }
-
-    fprintf(stderr, "Yaw %Lf, Pitch %Lf\n", _yaw, _pitch);
     updateCameraAttributes();
 }
 
@@ -68,24 +48,9 @@ void Camera::processMouseScroll(float offset)
 
 void Camera::updateCameraAttributes()
 {
-    _front = glm::normalize(glm::vec3(
-        cos(glm::radians(_yaw)) * cos(glm::radians(_pitch)),
-        sin(glm::radians(_pitch)),
-        sin(glm::radians(_yaw) * cos(glm::radians(_pitch)))
-    ));
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-    front.y = sin(glm::radians(_pitch));
-    front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-
-    _front = glm::normalize(front);
+    // Front should always point to origin.
+    _front = glm::normalize(glm::vec3(0.0f) - _position);
 
     _right = glm::normalize(glm::cross(_front, _worldUp));
     _up = glm::normalize(glm::cross(_right, _front));
-
-    fprintf(stderr, "Front: (%f, %f, %f)\nRight: (%f, %f, %f)\nUp: (%f, %f, %f)\n",
-        _front.x, _front.y, _front.z,
-        _right.x, _right.y, _right.z,
-        _up.x, _up.y, _up.z);
 }

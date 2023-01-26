@@ -32,6 +32,7 @@ public:
     void resize_window(GLFWwindow* window, int width, int height);
     void process_input(GLFWwindow* window);
     void process_mouse(GLFWwindow* window, double xPosition, double yPosition);
+    void process_mouse_button(GLFWwindow* window, int button, int action, int mods);
     void process_scroll(GLFWwindow* window, double xOffset, double yOffset);
 
 private:
@@ -40,10 +41,12 @@ private:
 
     Shader* model_shader;
 
+    bool _clicking = false;
 
 };
 
 void handle_mouse_events(GLFWwindow* window, double x, double y);
+void handle_mouse_button(GLFWwindow* window, int button, int action, int mods);
 void handle_scroll_events(GLFWwindow* window, double x, double y);
 void handle_resize(GLFWwindow* window, int w, int h);
 

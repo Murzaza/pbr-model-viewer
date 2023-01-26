@@ -6,6 +6,9 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 #include <cstdio>
 #include <cstdlib>
 
@@ -15,6 +18,7 @@ uint32_t scrnHeight;
 Camera* camera;
 Skybox* skybox;
 Model* model;
+glm::mat4* rotMatrix;
 /* World State Init end */
 
 App::App(uint32_t width, uint32_t height, std::string title)
@@ -46,8 +50,9 @@ App::App(uint32_t width, uint32_t height, std::string title)
 
     glfwSetWindowUserPointer(_window, this);
 
-    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(_window, handle_mouse_events);
+    glfwSetMouseButtonCallback(_window, handle_mouse_button);
 
     glfwSetScrollCallback(_window, handle_scroll_events);
     
@@ -80,6 +85,7 @@ App::App(uint32_t width, uint32_t height, std::string title)
     camera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
     skybox = new Skybox();
     model = new Model();
+    rotMatrix = new glm::mat4(1.0f);
     renderer = new Renderer();
 
 	std::vector<std::string> cubemap
@@ -112,6 +118,7 @@ App::~App()
     delete skybox;
     delete model;
     delete renderer;
+    delete rotMatrix;
     glfwTerminate();
 }
 
@@ -179,11 +186,12 @@ void App::process_input(GLFWwindow* window)
         camera->processKeyPress(UP, _deltaTime);
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         camera->processKeyPress(DOWN, _deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+        *rotMatrix = glm::mat4(1.0f);
 }
 
 void App::process_mouse(GLFWwindow* window, double xPosition, double yPosition)
 {
-    fprintf(stderr, "Processing mouse\n");
     if (firstMouse)
     {
         lastX = xPosition;
@@ -196,8 +204,27 @@ void App::process_mouse(GLFWwindow* window, double xPosition, double yPosition)
     lastX = xPosition;
     lastY = yPosition;
 
-    camera->processMouse(xOffset, yOffset);
+    if (_clicking) {
+        glm::vec3 swipe = glm::vec3(-xOffset, -yOffset, 0);
+        glm::vec3 rotAxis = glm::normalize(glm::cross(camera->_front, swipe));
+        fprintf(stderr, "rotAxis: [%f, %f, %f]\n", rotAxis.x, rotAxis.y, rotAxis.z);
+        glm::quat newRot = glm::angleAxis(glm::radians(glm::length(swipe)), rotAxis);
+        *rotMatrix *= glm::toMat4(newRot); 
+    }
 }
+
+void App::process_mouse_button(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT)
+    {
+        if (action == GLFW_PRESS)
+            _clicking = true;
+        else if (action == GLFW_RELEASE)
+            _clicking = false;
+    }
+    fprintf(stderr, "Button is %s\n", _clicking ? "clicking" : "not clicking");
+}
+
 void App::process_scroll(GLFWwindow* window, double xOffset, double yOffset)
 {
     fprintf(stderr, "Processing scroll\n");
@@ -208,6 +235,12 @@ void handle_mouse_events(GLFWwindow* window, double x, double y)
 {
     fprintf(stderr, "mouse_handler >> %Lf, %Lf\n", x, y);
     static_cast<App*>(glfwGetWindowUserPointer(window))->process_mouse(window, x, y);
+}
+
+void handle_mouse_button(GLFWwindow* window, int button, int action, int mods)
+{
+    fprintf(stderr, "mouse_button_handler >> %d, %d, %d\n", button, action, mods);
+    static_cast<App*>(glfwGetWindowUserPointer(window))->process_mouse_button(window, button, action, mods);
 }
 
 void handle_scroll_events(GLFWwindow* window, double x, double y)

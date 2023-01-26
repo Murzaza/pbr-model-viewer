@@ -3,6 +3,7 @@
 
 #include <glad/glad.h> 
 #include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 
 void drawBox(GLuint cubeVAO, Texture& texture, Shader& shader, float scale);
@@ -40,9 +41,8 @@ void Renderer::render()
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
 
-	glm::mat4 m = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-	m = glm::scale(m, glm::vec3(3.0f));
-    //drawBox(cubeVAO, texture, shader, 1.0f);
+	glm::mat4 m = glm::mat4(1.0f); 
+	m = m * *rotMatrix;
 	model->draw(m, view, projection, camera->_position);
 
 	skybox->draw(view, projection);
