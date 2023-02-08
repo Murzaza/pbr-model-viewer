@@ -69,6 +69,7 @@ App::App(uint32_t width, uint32_t height, std::string title)
     //Setup IMGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    _io = ImGui::GetIO();
 
     if (!ImGui_ImplGlfw_InitForOpenGL(_window, true))
     {
@@ -90,12 +91,12 @@ App::App(uint32_t width, uint32_t height, std::string title)
 
 	std::vector<std::string> cubemap
 	{
-		"skybox/right.jpg",
-		"skybox/left.jpg",
-		"skybox/top.jpg",
-		"skybox/bottom.jpg",
-		"skybox/front.jpg",
-		"skybox/back.jpg"
+		"skybox/posx.jpg",
+		"skybox/negx.jpg",
+		"skybox/posy.jpg",
+		"skybox/negy.jpg",
+		"skybox/posz.jpg",
+		"skybox/negz.jpg"
 	};
 	skybox->load(cubemap);
 
@@ -106,10 +107,6 @@ App::App(uint32_t width, uint32_t height, std::string title)
 	skyboxShader->add(GL_FRAGMENT_SHADER, frag);
 	skyboxShader->link();
 	skybox->setShader(skyboxShader);
-
-    std::string modelFile = "Helmet/DamagedHelmet.gltf";
-    model->load(modelFile);
-
 }
 
 App::~App()
@@ -137,6 +134,13 @@ void App::start()
         renderGUI();
         glfwSwapBuffers(_window);
         glfwPollEvents();
+
+        if (model->getPath() != _modelName) {
+            fprintf(stderr, "Loading new model %s\n", _modelName.c_str());
+            delete model;
+            model = new Model();
+            model->load(_modelName);
+        }
     }
 }
 
@@ -150,6 +154,7 @@ void App::renderGUI()
         ImGui::Begin("GUI");
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
             1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::InputText("Model", &_modelName);
         ImGui::End();
     }
 
@@ -167,62 +172,64 @@ void App::resize_window(GLFWwindow* window, int width, int height)
 
 void App::process_input(GLFWwindow* window)
 {
-    /*
-    TODO: Probably want to not have this in the Renderer. Probably an APP or just the main,
-    and on the render we feed it the view and projection matrices
-    */
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+    if (!ImGui::GetIO().WantCaptureKeyboard) {
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera->processKeyPress(FORWARD, _deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera->processKeyPress(BACKWARD, _deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera->processKeyPress(LEFT, _deltaTime);
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera->processKeyPress(RIGHT, _deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        camera->processKeyPress(UP, _deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        camera->processKeyPress(DOWN, _deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-        *rotMatrix = glm::mat4(1.0f);
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            camera->processKeyPress(FORWARD, _deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            camera->processKeyPress(BACKWARD, _deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            camera->processKeyPress(LEFT, _deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            camera->processKeyPress(RIGHT, _deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+            camera->processKeyPress(UP, _deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+            camera->processKeyPress(DOWN, _deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+            *rotMatrix = glm::mat4(1.0f);
+    }
 }
 
 void App::process_mouse(GLFWwindow* window, double xPosition, double yPosition)
 {
-    if (firstMouse)
-    {
+    if (!ImGui::GetIO().WantCaptureMouse) {
+        if (firstMouse)
+        {
+            lastX = xPosition;
+            lastY = yPosition;
+            firstMouse = false;
+        }
+
+        float xOffset = xPosition - lastX;
+        float yOffset = lastY - yPosition;
         lastX = xPosition;
         lastY = yPosition;
-        firstMouse = false;
-    }
 
-    float xOffset = xPosition - lastX;
-    float yOffset = lastY - yPosition;
-    lastX = xPosition;
-    lastY = yPosition;
-
-    if (_clicking) {
-        glm::vec3 swipe = glm::vec3(-xOffset, -yOffset, 0);
-        glm::vec3 rotAxis = glm::normalize(glm::cross(camera->_front, swipe));
-        fprintf(stderr, "rotAxis: [%f, %f, %f]\n", rotAxis.x, rotAxis.y, rotAxis.z);
-        glm::quat newRot = glm::angleAxis(glm::radians(glm::length(swipe)), rotAxis);
-        *rotMatrix *= glm::toMat4(newRot); 
+        if (_clicking) {
+            glm::vec3 swipe = glm::vec3(-xOffset, -yOffset, 0);
+            glm::vec3 rotAxis = glm::normalize(glm::cross(camera->_front, swipe));
+            fprintf(stderr, "rotAxis: [%f, %f, %f]\n", rotAxis.x, rotAxis.y, rotAxis.z);
+            glm::quat newRot = glm::angleAxis(glm::radians(glm::length(swipe)), rotAxis);
+            *rotMatrix *= glm::toMat4(newRot); 
+        }
     }
 }
 
 void App::process_mouse_button(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
-    {
-        if (action == GLFW_PRESS)
-            _clicking = true;
-        else if (action == GLFW_RELEASE)
-            _clicking = false;
+    if (!_io.WantCaptureMouse) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT)
+        {
+            if (action == GLFW_PRESS)
+                _clicking = true;
+            else if (action == GLFW_RELEASE)
+                _clicking = false;
+        }
+        fprintf(stderr, "Button is %s\n", _clicking ? "clicking" : "not clicking");
     }
-    fprintf(stderr, "Button is %s\n", _clicking ? "clicking" : "not clicking");
 }
 
 void App::process_scroll(GLFWwindow* window, double xOffset, double yOffset)

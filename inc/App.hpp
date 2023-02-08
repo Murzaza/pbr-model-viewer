@@ -1,6 +1,7 @@
 #ifndef APP
 #define APP 
 
+#include <imgui.h>
 #include "util.hpp"
 #include "World.hpp"
 #include "Shader.hpp"
@@ -39,9 +40,10 @@ private:
     GLFWwindow* _window;
     Renderer* renderer;
 
-    Shader* model_shader;
-
     bool _clicking = false;
+
+    ImGuiIO _io;
+    std::string _modelName = "";
 
 };
 

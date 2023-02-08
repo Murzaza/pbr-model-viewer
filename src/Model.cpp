@@ -31,16 +31,27 @@ Model::~Model()
 	}
 }
 
+std::string Model::getPath()
+{
+	return _path;
+}
+
+bool Model::isLoaded()
+{
+	return _loaded;
+}
+
 void Model::load(std::string& file)
 {
-	std::string path = PROJECT_SOURCE_DIR "/models/";
-	path += file;
+	//std::string path = PROJECT_SOURCE_DIR "/models/";
+	fprintf(stderr, "Loading: %s\n", file.c_str());
+	_path += file;
 
 	tinygltf::TinyGLTF loader;
 	std::string err;
 	std::string warn;
 
-	bool status = loader.LoadASCIIFromFile(&_model, &err, &warn, path);
+	bool status = loader.LoadASCIIFromFile(&_model, &err, &warn, _path);
 
 	if (!err.empty())
 		fprintf(stderr, "TinyGLTF Error:\n%s\n", err.c_str());
@@ -48,8 +59,10 @@ void Model::load(std::string& file)
 	if (!warn.empty())
 		fprintf(stderr, "TinyGLTF Warning:\n%s\n", warn.c_str());
 
-	if (!status)
+	if (!status) {
 		fprintf(stderr, "TinyGLTF failed to load model\n");
+		return;
+	}
 
 	assert(status);
 
@@ -89,6 +102,8 @@ void Model::load(std::string& file)
 			++it;
 		}
 	}
+
+	_loaded = true;
 }
 
 void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::vec3& camPosition)

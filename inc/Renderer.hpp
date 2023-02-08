@@ -20,9 +20,6 @@ public:
     //Access to switch post-process affect
 
 private:
-    GLuint cubeVAO, cubeVBO;
-    Shader shader;
-    Texture texture;
     //Framebuffer framebuffer
 };
 #endif

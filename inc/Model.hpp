@@ -6,6 +6,7 @@
 #include <tiny_gltf.h>
 
 #include <vector>
+#include <string>
 
 class Model
 {
@@ -15,6 +16,8 @@ public:
 
 	void load(std::string& file);
 	void draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::vec3& camPosition);
+	std::string getPath();
+	bool isLoaded();
 
 private:
 	Shader _shader;
@@ -24,6 +27,9 @@ private:
 	tinygltf::Model _model;
 	glm::mat4 _matrix;
 	bool _hasTangent = false;
+
+	std::string _path = "";
+	bool _loaded = false;
 
 	void setupNode(tinygltf::Node& node);
 	void setupMesh(tinygltf::Mesh& mesh);
