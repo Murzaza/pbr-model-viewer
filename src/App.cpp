@@ -134,13 +134,6 @@ void App::start()
         renderGUI();
         glfwSwapBuffers(_window);
         glfwPollEvents();
-
-        if (model->getPath() != _modelName) {
-            fprintf(stderr, "Loading new model %s\n", _modelName.c_str());
-            delete model;
-            model = new Model();
-            model->load(_modelName);
-        }
     }
 }
 
@@ -155,6 +148,13 @@ void App::renderGUI()
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
             1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::InputText("Model", &_modelName);
+        if (ImGui::Button("Load", ImVec2(100, 20)))
+        {
+            fprintf(stderr, "Loading model %s\n", _modelName.c_str());
+            delete model;
+            model = new Model();
+            model->load(_modelName);
+        };
         ImGui::End();
     }
 

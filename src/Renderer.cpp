@@ -21,7 +21,7 @@ Renderer::~Renderer()
 
 void Renderer::render()
 {
-    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// Get our view and projection matrices
 	glm::mat4 view = camera->getViewMatrix();
@@ -33,5 +33,5 @@ void Renderer::render()
 		model->draw(m, view, projection, camera->_position);
 	}
 
-	skybox->draw(view, projection);
+	//skybox->draw(view, projection);
 }

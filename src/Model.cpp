@@ -10,7 +10,23 @@
 #define TINYGLTF_IMPLEMENTATION
 #include <tiny_gltf.h>
 
+#include <GLFW/glfw3.h>
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
+
+glm::vec3 lightPositions[] = {
+	glm::vec3(-10.0f,  10.0f, 10.0f),
+	glm::vec3( 10.0f,  10.0f, 10.0f),
+	glm::vec3(-10.0f, -10.0f, 10.0f),
+	glm::vec3( 10.0f, -10.0f, 10.0f)
+};
+
+glm::vec3 ligtColors[] = {
+	glm::vec3(300.0f, 300.0f, 300.0f),
+	glm::vec3(300.0f, 300.0f, 300.0f),
+	glm::vec3(300.0f, 300.0f, 300.0f),
+	glm::vec3(300.0f, 300.0f, 300.0f)
+};
 
 Model::Model()
 {
@@ -115,11 +131,19 @@ void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::
 	_shader.setMat4("view", view);
 	_shader.setMat4("projection", projection);
 	_shader.setMat4("normal_matrix", glm::transpose(glm::inverse(view * projection)));
-	_shader.setVec3("sun_position", glm::vec3(10.0f, 15.0f, 15.0f));
+	_shader.setVec3("sun_position", glm::vec3(1.0f, 1.0f, 1.0f));
 	_shader.setVec3("sun_color", glm::vec3(1.0f));
 	_shader.setVec3("view_position", camPosition);
 	_shader.setBool("has_tangent", _hasTangent);
 
+	// Set lights
+	for (size_t i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
+	{
+		glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
+		//newPos = light
+		_shader.setVec3("lights[" + std::to_string(i) + "].position", newPos);
+		_shader.setVec3("lights[" + std::to_string(i) + "].color", ligtColors[i]);
+	}
 	glBindVertexArray(_vao);
 
 	const tinygltf::Scene& scene = _model.scenes[_model.defaultScene];
@@ -180,6 +204,11 @@ void Model::drawMesh(tinygltf::Mesh& mesh)
 		std::vector<double>& emissiveFactor = material.emissiveFactor;
 		_shader.setVec3("material.emissiveFactor", glm::vec3(emissiveFactor[0], emissiveFactor[1], emissiveFactor[2]));
 		glBindTexture(GL_TEXTURE_2D, emission);
+
+		GLuint mr = _texs[material.pbrMetallicRoughness.metallicRoughnessTexture.index];
+		glActiveTexture(GL_TEXTURE4);
+		_shader.setInt("material.pbrMetallicRoughness", 4);
+		glBindTexture(GL_TEXTURE_2D, mr);
 
 		glDrawElements(primitive.mode, indexAccessor.count, indexAccessor.componentType,
 			BUFFER_OFFSET(indexAccessor.byteOffset));
