@@ -48,6 +48,9 @@ std::string getType(GLint type)
     if (type == GL_FRAGMENT_SHADER) return "FRAGMENT";
     if (type == GL_GEOMETRY_SHADER) return "GEOMETRY";
     if (type == GL_VERTEX_SHADER) return "VERTEX";
+
+    // Default error shader
+    return "NOT_A_VALID_SHADER_TYPE";
 }
 
 void Shader::checkErrors(unsigned int shader, std::string type)

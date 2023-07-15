@@ -15,10 +15,10 @@
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 glm::vec3 lightPositions[] = {
-	glm::vec3(-10.0f,  10.0f, 10.0f),
-	glm::vec3( 10.0f,  10.0f, 10.0f),
-	glm::vec3(-10.0f, -10.0f, 10.0f),
-	glm::vec3( 10.0f, -10.0f, 10.0f)
+	glm::vec3(-1.0f,  1.0f, 10.0f),
+	glm::vec3( 1.0f,  1.0f, 10.0f),
+	glm::vec3(-1.0f, -1.0f, 10.0f),
+	glm::vec3( 1.0f, -1.0f, 10.0f)
 };
 
 glm::vec3 ligtColors[] = {
@@ -139,7 +139,7 @@ void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::
 	// Set lights
 	for (size_t i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
 	{
-		glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
+		glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 2.0) * 5.0, 0.0, 0.0);
 		//newPos = light
 		_shader.setVec3("lights[" + std::to_string(i) + "].position", newPos);
 		_shader.setVec3("lights[" + std::to_string(i) + "].color", ligtColors[i]);
@@ -236,7 +236,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 		const tinygltf::BufferView bufferView = _model.bufferViews[i];
 		if (bufferView.target == 0)
 		{
-			fprintf(stderr, "WARN: bufferView [%d] is zero", i)	;
+			fprintf(stderr, "WARN: bufferView [%zu] is zero", i);
 			continue; //Not supported;
 		}
 
@@ -247,7 +247,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 		_vbos[i] = vbo;
 		glBindBuffer(bufferView.target, vbo);
 
-		fprintf(stderr, "Loading Mesh with buffer %s\n\tsize: %d\n\tbyte offset: %d\n", bufferView.name.c_str(), bufferView.byteLength, bufferView.byteOffset);
+		fprintf(stderr, "Loading Mesh with buffer %s\n\tsize: %zu\n\tbyte offset: %zu\n", bufferView.name.c_str(), bufferView.byteLength, bufferView.byteOffset);
 
 		glBufferData(bufferView.target, bufferView.byteLength, &buffer.data.at(0) + bufferView.byteOffset, GL_STATIC_DRAW);
 	}
@@ -346,7 +346,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 			}
 			else
 			{
-				fprintf(stderr, "Not loading texture %d, %s\n", i, _model.images[tex.source].uri.c_str());
+				fprintf(stderr, "Not loading texture %zu, %s\n", i, _model.images[tex.source].uri.c_str());
 				assert(false);
 			}
 		}
