@@ -16,6 +16,8 @@ public:
 
 	void load(std::string& file);
 	void draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::vec3& camPosition);
+	void useShader() { _shader.use(); }
+	Shader *getShader() { return &_shader; }
 	std::string getPath();
 	bool isLoaded();
 

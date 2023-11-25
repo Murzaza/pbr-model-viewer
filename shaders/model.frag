@@ -2,9 +2,7 @@
 in vec3 vNormal;
 in vec3 vPos;
 in vec2 vUV;
-in vec3 vTangentLight;
-in vec3 vTangentView;
-in vec3 vTangentFrag;
+in mat3 vTBN;
 
 struct Material {
 	sampler2D albedo;
@@ -27,8 +25,6 @@ struct Light {
 
 uniform Material material;
 uniform Light lights[4];
-uniform vec3 sun_position;
-uniform vec3 sun_color;
 uniform vec3 view_position;
 
 const float PI = 3.14159256359;
@@ -75,10 +71,15 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+vec3 getTangent()
+{
+	vec3 tangentNormal = texture(material.normal, vUV).rgb * 2.0 - 1.0;
+	return normalize(vTBN * tangentNormal);
+}
+
 void main()
 {
-	vec3 N = texture(material.normal, vUV).rgb;
-	N = normalize(N * 2.0 - 1.0);
+	vec3 N = getTangent();
 
 	vec3 V = normalize(view_position - vPos);
 	vec3 F0 = vec3(0.04);

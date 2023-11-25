@@ -6,6 +6,8 @@
 #include "Texture.hpp"
 #include "Skybox.hpp"
 #include "Model.hpp"
+#include "Scene.hpp"
+
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
@@ -15,7 +17,8 @@ public:
     Renderer();
     ~Renderer();
 
-    void render();
+    //void render();
+    void render(Scene& scene);
 
     //Access to switch post-process affect
 

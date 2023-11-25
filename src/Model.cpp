@@ -136,7 +136,7 @@ void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::
 	_shader.setVec3("view_position", camPosition);
 	_shader.setBool("has_tangent", _hasTangent);
 
-	// Set lights
+	/*
 	for (size_t i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
 	{
 		glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 2.0) * 5.0, 0.0, 0.0);
@@ -144,6 +144,7 @@ void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::
 		_shader.setVec3("lights[" + std::to_string(i) + "].position", newPos);
 		_shader.setVec3("lights[" + std::to_string(i) + "].color", ligtColors[i]);
 	}
+	*/
 	glBindVertexArray(_vao);
 
 	const tinygltf::Scene& scene = _model.scenes[_model.defaultScene];

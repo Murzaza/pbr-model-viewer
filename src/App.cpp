@@ -1,5 +1,6 @@
 #include "App.hpp"
 #include "Shader.hpp"
+#include "Scene.hpp"
 
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -17,8 +18,16 @@ uint32_t scrnWidth;
 uint32_t scrnHeight;
 Camera* camera;
 Skybox* skybox;
-Model* model;
-glm::mat4* rotMatrix;
+Scene* scene;
+ImVec4 light_colors[4] = {
+    ImVec4(0.3f, 0.15f, 0.0f, 1.0f),
+    ImVec4(0.0f, 0.15f, 0.3f, 1.0f),
+    ImVec4(0.0f, 0.3f, 0.15f, 1.0f),
+    ImVec4(0.15f, 0.0f, 0.3f, 1.0f)
+};
+
+const float LIGHT_SHIFT = 1000.0f;
+void set_colors();
 /* World State Init end */
 
 App::App(uint32_t width, uint32_t height, std::string title)
@@ -85,8 +94,7 @@ App::App(uint32_t width, uint32_t height, std::string title)
 
     camera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
     skybox = new Skybox();
-    model = new Model();
-    rotMatrix = new glm::mat4(1.0f);
+    scene = new Scene();
     renderer = new Renderer();
 
 	std::vector<std::string> cubemap
@@ -113,9 +121,8 @@ App::~App()
 {
     delete camera;
     delete skybox;
-    delete model;
+    delete scene;
     delete renderer;
-    delete rotMatrix;
     glfwTerminate();
 }
 
@@ -127,9 +134,10 @@ void App::start()
         _deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        set_colors();
         process_input(_window);
         glEnable(GL_DEPTH_TEST);
-        renderer->render();
+        renderer->render(*scene);
 
         renderGUI();
         glfwSwapBuffers(_window);
@@ -148,13 +156,17 @@ void App::renderGUI()
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
             1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::InputText("Model", &_modelName);
+        ImGui::SameLine();
         if (ImGui::Button("Load", ImVec2(100, 20)))
         {
             fprintf(stderr, "Loading model %s\n", _modelName.c_str());
-            delete model;
-            model = new Model();
-            model->load(_modelName);
+            scene->loadModel(_modelName);
         };
+        
+        ImGui::ColorEdit3("Light 1 Color", (float *)&light_colors[0]);
+        ImGui::ColorEdit3("Light 2 Color", (float *)&light_colors[1]);
+        ImGui::ColorEdit3("Light 3 Color", (float *)&light_colors[2]);
+        ImGui::ColorEdit3("Light 4 Color", (float *)&light_colors[3]);
         ImGui::End();
     }
 
@@ -188,8 +200,9 @@ void App::process_input(GLFWwindow* window)
             camera->processKeyPress(UP, _deltaTime);
         if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
             camera->processKeyPress(DOWN, _deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-            *rotMatrix = glm::mat4(1.0f);
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+            scene->resetModelMatrix();
+        }
     }
 }
 
@@ -213,7 +226,7 @@ void App::process_mouse(GLFWwindow* window, double xPosition, double yPosition)
             glm::vec3 rotAxis = glm::normalize(glm::cross(camera->_front, swipe));
             fprintf(stderr, "rotAxis: [%f, %f, %f]\n", rotAxis.x, rotAxis.y, rotAxis.z);
             glm::quat newRot = glm::angleAxis(glm::radians(glm::length(swipe)), rotAxis);
-            *rotMatrix *= glm::toMat4(newRot); 
+            scene->setModelMatrix(scene->getModelMatrix() * glm::toMat4(newRot)); 
         }
     }
 }
@@ -262,3 +275,25 @@ void handle_resize(GLFWwindow* window, int w, int h)
     static_cast<App*>(glfwGetWindowUserPointer(window))->resize_window(window, w, h);
 }
 
+void set_colors()
+{
+    scene->setLightColor(0, glm::vec3(
+        light_colors[0].x * LIGHT_SHIFT,
+        light_colors[0].y * LIGHT_SHIFT,
+        light_colors[0].z * LIGHT_SHIFT));
+
+    scene->setLightColor(1, glm::vec3(
+        light_colors[1].x * LIGHT_SHIFT,
+        light_colors[1].y * LIGHT_SHIFT,
+        light_colors[1].z * LIGHT_SHIFT));
+
+    scene->setLightColor(2, glm::vec3(
+        light_colors[2].x * LIGHT_SHIFT,
+        light_colors[2].y * LIGHT_SHIFT,
+        light_colors[2].z * LIGHT_SHIFT));
+
+    scene->setLightColor(3, glm::vec3(
+        light_colors[3].x * LIGHT_SHIFT,
+        light_colors[3].y * LIGHT_SHIFT,
+        light_colors[3].z * LIGHT_SHIFT));
+}

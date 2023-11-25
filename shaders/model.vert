@@ -7,17 +7,12 @@ layout (location = 3) in vec3 inTangent;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 normal_matrix;
-uniform vec3 sun_position;
-uniform vec3 view_position;
 uniform bool has_tangent;
 
 out vec3 vNormal;
 out vec3 vPos;
 out vec2 vUV;
-out vec3 vTangentLight;
-out vec3 vTangentView;
-out vec3 vTangentFrag;
+out mat3 vTBN;
 
 mat3 generateTBN(vec3 normal)
 {
@@ -67,7 +62,5 @@ void main()
 	{
 		TBN = generateTBN(normalize(normalMatrix * inNormal));
 	}
-	vTangentLight = TBN * sun_position;
-	vTangentView = TBN * view_position;
-	vTangentFrag = TBN * vPos;
+	vTBN = TBN;
 }
