@@ -277,23 +277,8 @@ void handle_resize(GLFWwindow* window, int w, int h)
 
 void set_colors()
 {
-    scene->setLightColor(0, glm::vec3(
-        light_colors[0].x * LIGHT_SHIFT,
-        light_colors[0].y * LIGHT_SHIFT,
-        light_colors[0].z * LIGHT_SHIFT));
-
-    scene->setLightColor(1, glm::vec3(
-        light_colors[1].x * LIGHT_SHIFT,
-        light_colors[1].y * LIGHT_SHIFT,
-        light_colors[1].z * LIGHT_SHIFT));
-
-    scene->setLightColor(2, glm::vec3(
-        light_colors[2].x * LIGHT_SHIFT,
-        light_colors[2].y * LIGHT_SHIFT,
-        light_colors[2].z * LIGHT_SHIFT));
-
-    scene->setLightColor(3, glm::vec3(
-        light_colors[3].x * LIGHT_SHIFT,
-        light_colors[3].y * LIGHT_SHIFT,
-        light_colors[3].z * LIGHT_SHIFT));
+    scene->setLightColor(0, glm::make_vec3((float *)&light_colors[0]) * LIGHT_SHIFT);
+    scene->setLightColor(1, glm::make_vec3((float *)&light_colors[1]) * LIGHT_SHIFT);
+    scene->setLightColor(2, glm::make_vec3((float *)&light_colors[2]) * LIGHT_SHIFT);
+    scene->setLightColor(3, glm::make_vec3((float *)&light_colors[3]) * LIGHT_SHIFT);
 }
