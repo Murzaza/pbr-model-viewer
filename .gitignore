@@ -6,3 +6,11 @@ out/**
 *.ini
 CMakeFiles
 CMakeCache.txt
+ALL_BUILD.vcxproj*
+Debug/**
+ZERO_CHECK.vcxproj*
+cmake_install.cmake
+ogl-pbr-viewer.dir/**
+ogl-pbr-viewer.*
+vcpkg*
+x64/**
