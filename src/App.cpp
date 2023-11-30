@@ -180,6 +180,7 @@ void App::resize_window(GLFWwindow* window, int width, int height)
     scrnWidth = width;
     scrnHeight = height;
     glViewport(0, 0, scrnWidth, scrnHeight);
+    scene->resizeFramebuffer();
 }
 
 void App::process_input(GLFWwindow* window)

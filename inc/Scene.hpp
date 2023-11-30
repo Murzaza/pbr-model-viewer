@@ -4,6 +4,8 @@
 
 #include "Skybox.hpp"
 #include "Model.hpp"
+#include "Shader.hpp"
+#include "Framebuffer.hpp"
 
 typedef struct Light
 {
@@ -28,9 +30,17 @@ public:
     glm::mat4 getModelMatrix() { return _modelMatrix; }
     void resetModelMatrix() { _modelMatrix = glm::mat4(1.0f); }
 
+    void resizeFramebuffer();
+
 private:
     Light _lights[4];
     Skybox *_skybox;
     Model *_model;
     glm::mat4 _modelMatrix;
+
+    /* For rendering framebuffer */
+    Framebuffer *_framebuffer;
+    unsigned int _frameVao;
+    unsigned int _frameVbo;
+    Shader *_screenShader;
 };
