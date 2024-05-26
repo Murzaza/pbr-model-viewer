@@ -18,3 +18,6 @@ cmake --build build
     1. FlightHelmet: `C:\Tools\glTF-Sample-Assets\Models\FlightHelmet\glTF\FlightHelmet.gltf`
 1. Run `ogl-pbr-viewer.exe`
 1. Paste the path in the text box and hit load.
+
+## Screenshots
+![Screenshot](screenshots/damaged-helmet.png?raw=true "Damaged Helmet")
