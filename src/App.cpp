@@ -10,8 +10,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include <cstdio>
 #include <cstdlib>
+#include "debug.hpp"
 
 /* World State Init */
 uint32_t scrnWidth;
@@ -46,14 +46,14 @@ App::App(uint32_t width, uint32_t height, std::string title)
 
     if ( _window == nullptr )
     {
-        fprintf(stderr, "Failed to create GLFW window\n");
+        DEBUG("Failed to create GLFW window\n");
         exit(EXIT_FAILURE);
     }
 
     glfwMakeContextCurrent(_window);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        fprintf(stderr, "Failed to initialize GLAD\n");
+        DEBUG("Failed to initialize GLAD\n");
         exit(EXIT_FAILURE);
     }
 
@@ -68,7 +68,7 @@ App::App(uint32_t width, uint32_t height, std::string title)
     // debug info
     GLint numAttribs;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &numAttribs);
-    fprintf(stderr, "OpenGL version %s\nMax Vertex Attributes Supported: %d\n", glGetString(GL_VERSION), numAttribs);
+    DEBUG("OpenGL version %s\nMax Vertex Attributes Supported: %d\n", glGetString(GL_VERSION), numAttribs);
     
     //Setup viewport
     glViewport(0, 0, scrnWidth, scrnHeight);
@@ -82,12 +82,12 @@ App::App(uint32_t width, uint32_t height, std::string title)
 
     if (!ImGui_ImplGlfw_InitForOpenGL(_window, true))
     {
-        fprintf(stderr, "Unable to init IMGUI for GLFW\n");
+        DEBUG("Unable to init IMGUI for GLFW\n");
         assert(false);
     }
     if (!ImGui_ImplOpenGL3_Init())
     {
-        fprintf(stderr, "Unable to init IMGUI for OpenGL\n");
+        DEBUG("Unable to init IMGUI for OpenGL\n");
         assert(false);
     }
 
@@ -159,7 +159,7 @@ void App::renderGUI()
         ImGui::SameLine();
         if (ImGui::Button("Load", ImVec2(100, 20)))
         {
-            fprintf(stderr, "Loading model %s\n", _modelName.c_str());
+            DEBUG("Loading model %s\n", _modelName.c_str());
             scene->loadModel(_modelName);
         };
         
@@ -176,7 +176,7 @@ void App::renderGUI()
 
 void App::resize_window(GLFWwindow* window, int width, int height)
 {
-    fprintf(stderr, "Processing resize\n");
+    DEBUG("Processing resize\n");
     scrnWidth = width;
     scrnHeight = height;
     glViewport(0, 0, scrnWidth, scrnHeight);
@@ -225,7 +225,7 @@ void App::process_mouse(GLFWwindow* window, double xPosition, double yPosition)
         if (_clicking) {
             glm::vec3 swipe = glm::vec3(-xOffset, -yOffset, 0);
             glm::vec3 rotAxis = glm::normalize(glm::cross(camera->_front, swipe));
-            fprintf(stderr, "rotAxis: [%f, %f, %f]\n", rotAxis.x, rotAxis.y, rotAxis.z);
+            DEBUG("rotAxis: [%f, %f, %f]\n", rotAxis.x, rotAxis.y, rotAxis.z);
             glm::quat newRot = glm::angleAxis(glm::radians(glm::length(swipe)), rotAxis);
             scene->setModelMatrix(scene->getModelMatrix() * glm::toMat4(newRot)); 
         }
@@ -242,37 +242,37 @@ void App::process_mouse_button(GLFWwindow* window, int button, int action, int m
             else if (action == GLFW_RELEASE)
                 _clicking = false;
         }
-        fprintf(stderr, "Button is %s\n", _clicking ? "clicking" : "not clicking");
+        DEBUG("Button is %s\n", _clicking ? "clicking" : "not clicking");
     }
 }
 
 void App::process_scroll(GLFWwindow* window, double xOffset, double yOffset)
 {
-    fprintf(stderr, "Processing scroll\n");
+    DEBUG("Processing scroll\n");
     camera->processMouseScroll(yOffset);
 }
 
 void handle_mouse_events(GLFWwindow* window, double x, double y)
 {
-    fprintf(stderr, "mouse_handler >> %Lf, %Lf\n", x, y);
+    DEBUG("mouse_handler >> %Lf, %Lf\n", x, y);
     static_cast<App*>(glfwGetWindowUserPointer(window))->process_mouse(window, x, y);
 }
 
 void handle_mouse_button(GLFWwindow* window, int button, int action, int mods)
 {
-    fprintf(stderr, "mouse_button_handler >> %d, %d, %d\n", button, action, mods);
+    DEBUG("mouse_button_handler >> %d, %d, %d\n", button, action, mods);
     static_cast<App*>(glfwGetWindowUserPointer(window))->process_mouse_button(window, button, action, mods);
 }
 
 void handle_scroll_events(GLFWwindow* window, double x, double y)
 {
-    fprintf(stderr, "scroll_handler >> %Lf, %Lf\n", x, y);
+    DEBUG("scroll_handler >> %Lf, %Lf\n", x, y);
     static_cast<App*>(glfwGetWindowUserPointer(window))->process_scroll(window, x, y);
 }
 
 void handle_resize(GLFWwindow* window, int w, int h)
 {
-    fprintf(stderr, "resize_handler >> %d, %d\n", w, h);
+    DEBUG("resize_handler >> %d, %d\n", w, h);
     static_cast<App*>(glfwGetWindowUserPointer(window))->resize_window(window, w, h);
 }
 

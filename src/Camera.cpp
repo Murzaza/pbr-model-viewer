@@ -1,4 +1,5 @@
 #include "Camera.hpp"
+#include "debug.hpp"
 
 Camera::Camera(glm::vec3 position, glm::vec3 up) :
     _front(glm::vec3(0.0f, 0.0f, -1.0f)),
@@ -43,7 +44,7 @@ void Camera::processMouseScroll(float offset)
     if ( _zoom > 45.0f )
         _zoom = 45.0f;
 
-    fprintf(stderr, "Zoom; %Lf\n", _zoom);
+    DEBUG("Zoom; %Lf\n", _zoom);
 }
 
 void Camera::updateCameraAttributes()

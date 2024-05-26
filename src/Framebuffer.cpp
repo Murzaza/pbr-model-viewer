@@ -1,5 +1,6 @@
 #include "Framebuffer.hpp"
 #include "World.hpp"
+#include "debug.hpp"
 #include <glad/glad.h>
 
 Framebuffer::Framebuffer()
@@ -34,7 +35,7 @@ void Framebuffer::init(uint32_t width, uint32_t height)
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _rbo);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        fprintf(stderr, "ERROR::FRAMEBUFFER Framebuffer is not complete\n");
+        DEBUG("ERROR::FRAMEBUFFER Framebuffer is not complete\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

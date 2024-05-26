@@ -1,4 +1,5 @@
 #include "Skybox.hpp"
+#include "debug.hpp"
 
 #include <stb_image.h>
 #include <glad/glad.h>
@@ -42,7 +43,7 @@ void Skybox::load(std::vector<std::string> cubemap, bool flip)
 		std::string path = PROJECT_SOURCE_DIR "/textures/";
 		path += cubemap[i];
 
-		fprintf(stderr, "Loading cubemap: %s\n", path.c_str());
+		DEBUG("Loading cubemap: %s\n", path.c_str());
 		unsigned char* data = stbi_load(path.c_str(), &width, &height, &comp, 0);
 		if (data)
 		{
@@ -59,7 +60,7 @@ void Skybox::load(std::vector<std::string> cubemap, bool flip)
 		else
 		{
 			// TODO: We can handle this a lot better.
-			fprintf(stderr, "Unable to load cubemap item %s\n", path.c_str());
+			DEBUG("Unable to load cubemap item %s\n", path.c_str());
 		}
 
 		stbi_image_free(data);

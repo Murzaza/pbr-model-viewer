@@ -27,7 +27,7 @@ private:
 	std::map<size_t, unsigned int> _vbos;
 	std::vector<unsigned int> _texs;
 	tinygltf::Model _model;
-	glm::mat4 _matrix;
+	std::vector<glm::mat4> _node_matricies;
 	bool _hasTangent = false;
 
 	std::string _path = "";
@@ -37,5 +37,7 @@ private:
 	void setupMesh(tinygltf::Mesh& mesh);
 	void drawNode(tinygltf::Node& node);
 	void drawMesh(tinygltf::Mesh& mesh);
+
+	unsigned int retrieveTex(size_t idx);
 };
 #endif

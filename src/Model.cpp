@@ -12,6 +12,8 @@
 
 #include <GLFW/glfw3.h>
 
+#include "debug.hpp"
+
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 glm::vec3 lightPositions[] = {
@@ -60,7 +62,7 @@ bool Model::isLoaded()
 void Model::load(std::string& file)
 {
 	//std::string path = PROJECT_SOURCE_DIR "/models/";
-	fprintf(stderr, "Loading: %s\n", file.c_str());
+	DEBUG("Loading: %s\n", file.c_str());
 	_path += file;
 
 	tinygltf::TinyGLTF loader;
@@ -70,13 +72,13 @@ void Model::load(std::string& file)
 	bool status = loader.LoadASCIIFromFile(&_model, &err, &warn, _path);
 
 	if (!err.empty())
-		fprintf(stderr, "TinyGLTF Error:\n%s\n", err.c_str());
+		MPR_PRINT_ERROR("TinyGLTF Error:\n%s\n", err.c_str());
 
 	if (!warn.empty())
-		fprintf(stderr, "TinyGLTF Warning:\n%s\n", warn.c_str());
+		MPR_PRINT_ERROR("TinyGLTF Warning:\n%s\n", warn.c_str());
 
 	if (!status) {
-		fprintf(stderr, "TinyGLTF failed to load model\n");
+		MPR_PRINT_ERROR("TinyGLTF failed to load model\n");
 		return;
 	}
 
@@ -85,23 +87,44 @@ void Model::load(std::string& file)
 	glGenVertexArrays(1, &_vao);
 	glBindVertexArray(_vao);
 	const tinygltf::Scene& scene = _model.scenes[_model.defaultScene];
-	for (size_t i = 0; i < scene.nodes.size(); i++)
+	DEBUG("Loading beginning on %zd nodes\n", scene.nodes.size());
+	for (auto& scene_node : scene.nodes)
 	{
-		assert((scene.nodes[i] >= 0) && (scene.nodes[i] < _model.nodes.size()));
-		setupNode(_model.nodes[scene.nodes[i]]);
+		DEBUG("Loading Node %zd\n", i);
+		assert((scene_node >= 0) && (scene_node < _model.nodes.size()));
+		setupNode(_model.nodes[scene_node]);
 	}
 	glBindVertexArray(0);
 
-	if (_model.nodes[0].rotation.size() == 4) {
-		glm::quat rot = glm::quat(_model.nodes[0].rotation[3],
-								  _model.nodes[0].rotation[0],
-								  _model.nodes[0].rotation[1],
-								  _model.nodes[0].rotation[2]);
-		_matrix = glm::mat4_cast(rot);
-	}
-	else
+	for(auto& node : _model.nodes)
 	{
-		_matrix = glm::mat4(1.0f);
+		/* Put together the nodes matrix */
+		glm::mat4 node_matrix = glm::mat4(1.0f);
+		if (node.matrix.size() == 16)
+		{
+			node_matrix = glm::make_mat4(node.matrix.data());
+		}
+
+		if (node.translation.size() == 3)
+		{
+			node_matrix = glm::translate(node_matrix, glm::vec3(node.translation[0], node.translation[1], node.translation[2]));
+		}
+
+		if (node.rotation.size() == 4)
+		{
+			glm::quat rot = glm::quat(node.rotation[3],
+									  node.rotation[0],
+								  	  node.rotation[1],
+								  	  node.rotation[2]);
+			node_matrix = glm::mat4_cast(rot) * node_matrix;	
+		}
+
+		if (node.scale.size() == 3)
+		{
+			node_matrix = glm::scale(node_matrix, glm::vec3(node.scale[0], node.scale[1], node.scale[2]));
+		}
+
+		_node_matricies.push_back(node_matrix);
 	}
 
 	//cleanup 
@@ -124,10 +147,7 @@ void Model::load(std::string& file)
 
 void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::vec3& camPosition)
 {
-	// Model Matrix
-	glm::mat4 m = model * _matrix;
 	_shader.use();
-	_shader.setMat4("model", m);
 	_shader.setMat4("view", view);
 	_shader.setMat4("projection", projection);
 	_shader.setMat4("normal_matrix", glm::transpose(glm::inverse(view * projection)));
@@ -136,21 +156,16 @@ void Model::draw(glm::mat4& model, glm::mat4& view, glm::mat4& projection, glm::
 	_shader.setVec3("view_position", camPosition);
 	_shader.setBool("has_tangent", _hasTangent);
 
-	/*
-	for (size_t i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
-	{
-		glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 2.0) * 5.0, 0.0, 0.0);
-		//newPos = light
-		_shader.setVec3("lights[" + std::to_string(i) + "].position", newPos);
-		_shader.setVec3("lights[" + std::to_string(i) + "].color", ligtColors[i]);
-	}
-	*/
 	glBindVertexArray(_vao);
 
 	const tinygltf::Scene& scene = _model.scenes[_model.defaultScene];
 	for (size_t i = 0; i < scene.nodes.size(); i++)
 	{
-		drawNode(_model.nodes[scene.nodes[i]]);
+		tinygltf::Node node = _model.nodes[scene.nodes[i]];
+		glm::mat4 node_matrix = _node_matricies[scene.nodes[i]];
+		glm::mat4 m = model * node_matrix;
+		_shader.setMat4("model", m);
+		drawNode(node);
 	}
 
 	glBindVertexArray(0);
@@ -171,6 +186,7 @@ void Model::drawNode(tinygltf::Node& node)
 
 void Model::drawMesh(tinygltf::Mesh& mesh)
 {
+	DEBUG("Drawing mesh %s, prims: %zd \n", mesh.name.empty() ? "N/A" : mesh.name.c_str(), mesh.primitives.size());
 	for (size_t i = 0; i < mesh.primitives.size(); i++)
 	{
 		tinygltf::Primitive primitive = mesh.primitives[i];
@@ -178,35 +194,43 @@ void Model::drawMesh(tinygltf::Mesh& mesh)
 		tinygltf::Material& material = _model.materials[primitive.material];
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _vbos.at(indexAccessor.bufferView));
-		GLuint albedo = _texs[material.pbrMetallicRoughness.baseColorTexture.index];
+		GLuint albedo = retrieveTex(material.pbrMetallicRoughness.baseColorTexture.index);
 		glActiveTexture(GL_TEXTURE0);
 		_shader.setInt("material.albedo", 0);
 		std::vector<double>& albedoFactor = material.pbrMetallicRoughness.baseColorFactor;
+		DEBUG("baseColorFactor (size): %zd\n", albedoFactor.size());
 		_shader.setVec4("material.albedoFactor", glm::vec4(albedoFactor[0], albedoFactor[1], albedoFactor[2], albedoFactor[3]));
 		_shader.setFloat("material.metallic", material.pbrMetallicRoughness.metallicFactor);
 		_shader.setFloat("material.roughness", material.pbrMetallicRoughness.roughnessFactor);
 		glBindTexture(GL_TEXTURE_2D, albedo);
 
-		GLuint normal = _texs[material.normalTexture.index];
+		DEBUG("Texture Indices:\n  Albedo: %d\n  Normal: %d\n  Occlusion: %d\n  Emission: %d\n  MetallicRoughness: %d\n",
+			material.pbrMetallicRoughness.baseColorTexture.index,
+			material.normalTexture.index,
+			material.occlusionTexture.index,
+			material.emissiveTexture.index,
+			material.pbrMetallicRoughness.metallicRoughnessTexture.index);
+
+		GLuint normal =  retrieveTex(material.normalTexture.index);
 		glActiveTexture(GL_TEXTURE1);
 		_shader.setInt("material.normal", 1);
 		_shader.setFloat("material.normalScale", material.normalTexture.scale);
 		glBindTexture(GL_TEXTURE_2D, normal);
 
-		GLuint ao = _texs[material.occlusionTexture.index];
+		GLuint ao = retrieveTex(material.occlusionTexture.index);
 		glActiveTexture(GL_TEXTURE2);
 		_shader.setInt("material.ao", 2);
 		_shader.setFloat("material.occulsionStrength", material.occlusionTexture.strength);
 		glBindTexture(GL_TEXTURE_2D, ao);
 
-		GLuint emission = _texs[material.emissiveTexture.index];
+		GLuint emission = retrieveTex(material.emissiveTexture.index);
 		glActiveTexture(GL_TEXTURE3);
 		_shader.setInt("material.emission", 3);
 		std::vector<double>& emissiveFactor = material.emissiveFactor;
 		_shader.setVec3("material.emissiveFactor", glm::vec3(emissiveFactor[0], emissiveFactor[1], emissiveFactor[2]));
 		glBindTexture(GL_TEXTURE_2D, emission);
 
-		GLuint mr = _texs[material.pbrMetallicRoughness.metallicRoughnessTexture.index];
+		GLuint mr = retrieveTex(material.pbrMetallicRoughness.metallicRoughnessTexture.index);
 		glActiveTexture(GL_TEXTURE4);
 		_shader.setInt("material.pbrMetallicRoughness", 4);
 		glBindTexture(GL_TEXTURE_2D, mr);
@@ -218,6 +242,10 @@ void Model::drawMesh(tinygltf::Mesh& mesh)
 
 void Model::setupNode(tinygltf::Node& node)
 {
+	DEBUG("This Node has mesh id %d out of %zd and %zd children\n",
+		node.mesh,
+		_model.meshes.size(),
+		node.children.size());
 	if ((node.mesh >= 0) && (node.mesh < _model.meshes.size()))
 	{
 		setupMesh(_model.meshes[node.mesh]);
@@ -225,6 +253,7 @@ void Model::setupNode(tinygltf::Node& node)
 
 	for (size_t i = 0; i < node.children.size(); i++)
 	{
+		DEBUG("Loading child node %zd\n", i);
 		assert((node.children[i] >= 0) && (node.children[i] < _model.nodes.size()));
 		setupNode(_model.nodes[node.children[i]]);
 	}
@@ -237,8 +266,21 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 		const tinygltf::BufferView bufferView = _model.bufferViews[i];
 		if (bufferView.target == 0)
 		{
-			fprintf(stderr, "WARN: bufferView [%zu] is zero", i);
+			DEBUG("WARN: bufferView [%zu] is zero", i);
 			continue; //Not supported;
+		}
+
+		int sparse_acc = -1;
+		for (size_t a_i = 0; a_i < _model.accessors.size(); ++a_i) {
+			const auto& acc = _model.accessors[a_i];
+			if (acc.bufferView == i) {
+				MPR_PRINT_ERROR("%zu is used by accessor %zu\n", i, a_i);
+				if (acc.sparse.isSparse) {
+					MPR_PRINT_ERROR("WARN: We have a sparse accessor at %zu\n", a_i);
+					sparse_acc = a_i;
+					break;
+				}
+			}
 		}
 
 		const tinygltf::Buffer& buffer = _model.buffers[bufferView.buffer];
@@ -248,8 +290,9 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 		_vbos[i] = vbo;
 		glBindBuffer(bufferView.target, vbo);
 
-		fprintf(stderr, "Loading Mesh with buffer %s\n\tsize: %zu\n\tbyte offset: %zu\n", bufferView.name.c_str(), bufferView.byteLength, bufferView.byteOffset);
+		DEBUG("Loading Mesh with buffer %s\n\tsize: %zu\n\tbyte offset: %zu\n", bufferView.name.c_str(), bufferView.byteLength, bufferView.byteOffset);
 
+		MPR_PRINT_ERROR("glBufferData(%d, %zu, data_ptr + %zu, GL_STATIC_DRAW)\n", bufferView.target, bufferView.byteLength, bufferView.byteOffset);
 		glBufferData(bufferView.target, bufferView.byteLength, &buffer.data.at(0) + bufferView.byteOffset, GL_STATIC_DRAW);
 	}
 
@@ -275,7 +318,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 			if (attrib.first.compare("TANGENT") == 0) vaa = 3;
 			if (vaa > -1)
 			{
-				fprintf(stderr, "Setting up %d\n", vaa);
+				DEBUG("Setting up %d\n", vaa);
 				if (vaa == 3) _hasTangent = true;
 				glEnableVertexAttribArray(vaa);
 				glVertexAttribPointer(vaa, size, accessor.componentType,
@@ -284,7 +327,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 			}
 			else
 			{
-				fprintf(stderr, "VAA is missing: %s\n", attrib.first.c_str());
+				DEBUG("VAA is missing: %s\n", attrib.first.c_str());
 			}
 		}
 
@@ -293,7 +336,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 		{
 			tinygltf::Texture& tex = _model.textures[i];
 
-			fprintf(stderr, "source: %d, sampler: %d\n", tex.source, tex.sampler);
+			DEBUG("source: %d, sampler: %d\n", tex.source, tex.sampler);
 			if (tex.source > -1)
 			{
 				int magFilter = GL_LINEAR;
@@ -310,7 +353,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 					wrapS = sampler.wrapS > -1 ? sampler.wrapS : GL_REPEAT;
 					wrapT = sampler.wrapT > -1 ? sampler.wrapT : GL_REPEAT;
 
-					fprintf(stderr, "Sampler available setting Min: %d, Mag: %d, S: %d, T: %d\n",
+					DEBUG("Sampler available setting Min: %d, Mag: %d, S: %d, T: %d\n",
 						minFilter, magFilter, wrapS, wrapT);
 				}
 
@@ -319,7 +362,7 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 
 				tinygltf::Image& image = _model.images[tex.source];
 
-				fprintf(stderr, "Processing texture: %s\n", image.uri.c_str());
+				DEBUG("Processing texture: %s\n", image.uri.c_str());
 
 				glBindTexture(GL_TEXTURE_2D, texId);
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -347,9 +390,16 @@ void Model::setupMesh(tinygltf::Mesh& mesh)
 			}
 			else
 			{
-				fprintf(stderr, "Not loading texture %zu, %s\n", i, _model.images[tex.source].uri.c_str());
+				DEBUG("Not loading texture %zu, %s\n", i, _model.images[tex.source].uri.c_str());
 				assert(false);
 			}
 		}
 	}
+
+}
+
+unsigned int Model::retrieveTex(size_t idx)
+{
+	if (idx < 0 || idx > _texs.size()) return 0;
+	return _texs[idx];
 }

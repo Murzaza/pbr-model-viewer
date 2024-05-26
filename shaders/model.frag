@@ -122,6 +122,8 @@ void main()
 	}
 
 	float ao = texture(material.ao, vUV).r;
+	ao = ao > 0.0 ? ao : 1.0;
+
 	vec3 ambient = vec3(0.03) * albedo * ao;
 
 	vec3 wip_color = ambient * Lo;

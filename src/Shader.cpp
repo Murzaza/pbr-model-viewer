@@ -1,4 +1,5 @@
 #include "Shader.hpp"
+#include "debug.hpp"
 
 std::string getType(GLint type);
 
@@ -15,12 +16,12 @@ Shader::~Shader()
 void Shader::add(GLint type, std::string& filename)
 {
     std::string path = PROJECT_SOURCE_DIR "/shaders/";
-    fprintf(stderr, "Adding %s to the program\n", (path + filename).c_str());
+    DEBUG("Adding %s to the program\n", (path + filename).c_str());
     std::ifstream stream(path + filename);
 
     std::string shaderSource = std::string(std::istreambuf_iterator<char>(stream),
                                           (std::istreambuf_iterator<char>()));
-    //fprintf(stderr, "Shader source: %s\n", shaderSource.c_str());
+    //DEBUG("Shader source: %s\n", shaderSource.c_str());
     const char* code = shaderSource.c_str();
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, 1, &code, nullptr);
@@ -63,7 +64,7 @@ void Shader::checkErrors(unsigned int shader, std::string type)
         if (!success)
         {
             glGetShaderInfoLog(shader, 1024, nullptr, infoLog);
-            fprintf(stderr, "ERROR::SHADER::%s::COMPILE\n%s", type.c_str(), infoLog);
+            DEBUG("ERROR::SHADER::%s::COMPILE\n%s", type.c_str(), infoLog);
         }
     }
     else
@@ -72,7 +73,7 @@ void Shader::checkErrors(unsigned int shader, std::string type)
         if (!success)
         {
             glGetProgramInfoLog(shader, 1024, nullptr, infoLog);
-            fprintf(stderr, "ERROR::SHADER::LINK::%s\n%s", type.c_str(), infoLog);
+            DEBUG("ERROR::SHADER::LINK::%s\n%s", type.c_str(), infoLog);
         }
     }
     assert(success);

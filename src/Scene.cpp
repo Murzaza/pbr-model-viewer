@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "debug.hpp"
 #include <string>
 
 float frameCubeVerts[] = {
@@ -56,7 +57,7 @@ void Scene::render(glm::mat4& view, glm::mat4& proj, glm::vec3& camPos)
     /* Render the scene */
     _framebuffer->setFramebuffer();
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (_model->isLoaded())
     {
@@ -87,7 +88,7 @@ void Scene::render(glm::mat4& view, glm::mat4& proj, glm::vec3& camPos)
 void Scene::setLightColor(size_t idx, glm::vec3 color)
 {
     if (idx > 3) {
-        fprintf(stderr, "idx %zu is out of range for size 4\n", idx);
+        DEBUG("idx %zu is out of range for size 4\n", idx);
         return;
     }
 
@@ -97,7 +98,7 @@ void Scene::setLightColor(size_t idx, glm::vec3 color)
 void Scene::setLightPosition(size_t idx, glm::vec3 pos)
 {
     if (idx > 3) {
-        fprintf(stderr, "idx %zu is out of range for size 4\n", idx);
+        DEBUG("idx %zu is out of range for size 4\n", idx);
         return;
     }
 
@@ -107,13 +108,13 @@ void Scene::setLightPosition(size_t idx, glm::vec3 pos)
 void Scene::loadModel(std::string filepath)
 {
     // File existence check here
-    fprintf(stderr, "Loading model %s\n", filepath.c_str());
+    DEBUG("Loading model %s\n", filepath.c_str());
 
     Model *model_holder = new Model();
     model_holder->load(filepath);
 
     // Check model was loaded properly
-    fprintf(stderr, "Model successfully loaded!");
+    DEBUG("Model successfully loaded!");
     delete _model;
     _model = model_holder;
 }

@@ -1,4 +1,5 @@
 #include "Texture.hpp"
+#include "debug.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -52,7 +53,7 @@ void Texture::load(std::string file, bool flip)
 	}
 	else
 	{
-		fprintf(stderr, "Failed to load texture from %s", path.c_str());
+		DEBUG("Failed to load texture from %s", path.c_str());
 	}
 
 	stbi_image_free(data);

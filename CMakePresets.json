@@ -10,12 +10,24 @@
             "name": "default",
             "displayName": "Default Config (Win)",
             "description": "Default build using Visual Studio and vcpkg",
-            "generator": "Visual Studio 17 2022",
+            "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-                "CMAKE_GENERATOR_PLATFORM": "x64",
-                "VCPKG_TARGET_TRIPLET": "x64-windows"
+                "CMAKE_TOOLCHAIN_FILE": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_TARGET_TRIPLET": "x64-windows",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Default Release Config (Win)",
+            "description": "Default Release build using Visual Studio and vcpkg",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_TARGET_TRIPLET": "x64-windows",
+                "CMAKE_BUILD_TYPE": "Release"
             }
         }
     ]
